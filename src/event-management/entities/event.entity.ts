@@ -1,17 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { City } from './city.entity';
+import { AbstractEntity } from '../../database/abstract.entity';
 
 @Entity()
-export class Event {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class Event extends AbstractEntity<Event> {
   @Column()
   name: string;
 
-  @ManyToOne(() => City, (city) => city.events)
-  city: City;
-
   @Column()
   price: number;
+
+  @ManyToOne(() => City, (city) => city.events)
+  city: City;
 }

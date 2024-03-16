@@ -10,12 +10,12 @@ type DatabaseType = 'mysql' | 'sqlite';
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         const type = configService.getOrThrow('TYPE') as DatabaseType;
-
         if (type === 'sqlite') {
           return {
             type,
-            database: 'db/sql',
-            synchronize: configService.getOrThrow('SYNCHRONIZE'),
+            database: 'db/sql.sqlite',
+            synchronize: Boolean(configService.getOrThrow('SYNCHRONIZE')),
+            autoLoadEntities: true,
           };
         }
 
