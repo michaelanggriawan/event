@@ -10,7 +10,10 @@ import {
 } from './swagger/event.swagger';
 import { CityResponse, CityResponseCreated } from './swagger/city.swagger';
 
-@Controller('event-management')
+@Controller({
+  version: '1',
+  path: 'event-management',
+})
 export class EventManagementController {
   constructor(
     private readonly eventManagementService: EventManagementService,
