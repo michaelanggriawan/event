@@ -110,6 +110,7 @@ describe('EventManagementService', () => {
       });
 
       jest.spyOn(cityRepository, 'findOne').mockResolvedValue(city);
+      jest.spyOn(eventRepository, 'findOne').mockResolvedValue(null);
 
       const event: Event = new Event({
         id: 1,
@@ -136,6 +137,8 @@ describe('EventManagementService', () => {
         countryName: 'Test Country',
       };
       const city: City = new City(createCityDto);
+
+      jest.spyOn(cityRepository, 'findOne').mockResolvedValue(null);
       jest.spyOn(entityManager, 'save').mockResolvedValue({ id: 1, ...city });
 
       const result = await service.createCity(createCityDto);
