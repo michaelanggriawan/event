@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpStatus, INestApplication } from '@nestjs/common';
+import { HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { DatabaseModule } from '../src/database/database.module';
@@ -28,6 +28,7 @@ describe('AppController (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe());
     await app.init();
   });
 
@@ -40,6 +41,36 @@ describe('AppController (e2e)', () => {
       })
       .expect(HttpStatus.CREATED)
       .expect({ countryName: 'indonesia', cityName: 'jakarta', id: 1 });
+  });
+
+  it('/ (POST) City -> should thrown an error 400 Bad request cityName should not be empty', async () => {
+    return request(app.getHttpServer())
+      .post('/event-management/cities')
+      .send({
+        cityName: '',
+        countryName: 'indonesia',
+      })
+      .expect(HttpStatus.BAD_REQUEST)
+      .expect({
+        message: ['cityName should not be empty'],
+        error: 'Bad Request',
+        statusCode: HttpStatus.BAD_REQUEST,
+      });
+  });
+
+  it('/ (POST) City -> should thrown an error 400 Bad request countryName must be a valid registered country', async () => {
+    return request(app.getHttpServer())
+      .post('/event-management/cities')
+      .send({
+        cityName: 'jakarta',
+        countryName: 'unregistered country',
+      })
+      .expect(HttpStatus.BAD_REQUEST)
+      .expect({
+        message: ['countryName must be a valid registered country'],
+        error: 'Bad Request',
+        statusCode: HttpStatus.BAD_REQUEST,
+      });
   });
 
   it('/ (GET) City', async () => {
@@ -71,6 +102,22 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/ (POST) Events -> should thrown an error 400 Bad request name should not be empty', async () => {
+    return request(app.getHttpServer())
+      .post('/event-management/events')
+      .send({
+        name: '',
+        price: 120,
+        city: 'jakarta',
+      })
+      .expect(HttpStatus.BAD_REQUEST)
+      .expect({
+        message: ['name should not be empty'],
+        error: 'Bad Request',
+        statusCode: 400,
+      });
+  });
+
   it("/ (POST) Events -> Should thrown 404 Not Found when city doesn't exist", async () => {
     return request(app.getHttpServer())
       .post('/event-management/events')
@@ -80,6 +127,25 @@ describe('AppController (e2e)', () => {
         city: 'city is not exist',
       })
       .expect(HttpStatus.NOT_FOUND);
+  });
+
+  it('/ (POST) Events -> should thrown an error 400 Bad request price should not be empty and price should be number', async () => {
+    return request(app.getHttpServer())
+      .post('/event-management/events')
+      .send({
+        name: 'Taylor Swift',
+        price: '',
+        city: 'jakarta',
+      })
+      .expect(HttpStatus.BAD_REQUEST)
+      .expect({
+        message: [
+          'price should not be empty',
+          'price must be a number conforming to the specified constraints',
+        ],
+        error: 'Bad Request',
+        statusCode: 400,
+      });
   });
 
   it('/ (GET) Events', () => {
