@@ -6,6 +6,8 @@ import { WinstonModule } from 'nest-winston';
 import { transports, format } from 'winston';
 import { AllExceptionFilter } from './interceptors/error.interceptor';
 import 'winston-daily-rotate-file';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -48,7 +50,19 @@ async function bootstrap() {
   });
   app.useGlobalInterceptors(new HttpSuccessInterceptor());
   app.enableCors();
+  const configService = app.get(ConfigService);
 
-  await app.listen(3000);
+  // Swagger
+  const config = new DocumentBuilder()
+    .setTitle('event API')
+    .setDescription('event APIs doc')
+    .setVersion('1.0')
+    .addTag('events')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('v1/event/docs', app, document);
+
+  await app.listen(configService.get<string>('SERVER_PORT'));
 }
 bootstrap();

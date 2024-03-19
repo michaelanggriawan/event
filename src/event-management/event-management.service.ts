@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Event } from './entities/event.entity';
 import { EntityManager, Repository } from 'typeorm';
@@ -17,11 +21,24 @@ export class EventManagementService {
   ) {}
 
   async findEvents() {
-    return await this.eventRepository.find();
+    return await this.eventRepository.find({
+      relations: {
+        city: true,
+      },
+    });
   }
 
   async findEvent(id: number) {
-    return await this.eventRepository.findOne({ where: { id } });
+    const response = await this.eventRepository.findOne({
+      where: { id },
+      relations: { city: true },
+    });
+
+    if (!response) {
+      throw new NotFoundException('Event is not exist');
+    }
+
+    return response;
   }
 
   async createEvents(createEventDto: CreateEventDto) {
@@ -35,8 +52,16 @@ export class EventManagementService {
       throw new NotFoundException('City is not found');
     }
 
+    const isEventExist = await this.eventRepository.findOne({
+      where: { name: createEventDto.name.toLowerCase() },
+    });
+
+    if (isEventExist) {
+      throw new ConflictException(`${createEventDto.name} already created`);
+    }
+
     const event = new Event({
-      name: createEventDto.name,
+      name: createEventDto.name.toLowerCase(),
       city: city,
       price: createEventDto.price,
     });
@@ -47,6 +72,17 @@ export class EventManagementService {
   }
 
   async createCity(createCityDto: CreateCityDto) {
+    const isCityExist = await this.cityRepository.findOne({
+      where: {
+        countryName: createCityDto.countryName.toLowerCase(),
+        cityName: createCityDto.cityName.toLowerCase(),
+      },
+    });
+
+    if (isCityExist) {
+      throw new ConflictException(`the city in this country already created`);
+    }
+
     const city = new City({
       countryName: createCityDto.countryName.toLowerCase(),
       cityName: createCityDto.cityName.toLowerCase(),
@@ -63,6 +99,11 @@ export class EventManagementService {
         events: true,
       },
     });
+
+    if (!city) {
+      throw new NotFoundException('City is not found');
+    }
+
     return city;
   }
 }
